@@ -230,7 +230,9 @@ class EpubViewer(epubview.EpubView):
         return
 
     def find_set_highlight_search(self, set_highlight_search):
-        self._view.set_highlight_text_matches(set_highlight_search)
+        # TODO: port
+        #self._view.set_highlight_text_matches(set_highlight_search)
+        pass
 
     def set_current_page(self, n):
         # When the book is being loaded, calling this does not help

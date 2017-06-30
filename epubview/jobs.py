@@ -124,13 +124,15 @@ class _JobPaginator(GObject.GObject):
         settings.props.sans_serif_font_family = 'DejaVu LGC Sans'
         settings.props.serif_font_family = 'DejaVu LGC Serif'
         settings.props.monospace_font_family = 'DejaVu LGC Sans Mono'
-        settings.props.enforce_96_dpi = True
+        # TODO: port
+        #settings.props.enforce_96_dpi = True
         # FIXME: This does not seem to work
         # settings.props.auto_shrink_images = False
         settings.props.enable_plugins = False
         settings.props.default_font_size = 12
         settings.props.default_monospace_font_size = 10
-        settings.props.default_encoding = 'utf-8'
+        # TODO: port
+        #settings.props.default_encoding = 'utf-8'
 
         sw = Gtk.ScrolledWindow()
         sw.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.NEVER)
@@ -140,12 +142,12 @@ class _JobPaginator(GObject.GObject):
                             self._single_page_height)
         sw.add(self._temp_view)
         self._temp_win.add(sw)
-        self._temp_view.connect('load-finished', self._page_load_finished_cb)
+        self._temp_view.connect('load-changed', self._page_load_changed_cb)
 
         self._temp_win.show_all()
         self._temp_win.unmap()
 
-        self._temp_view.open(self._filelist[self._count])
+        self._temp_view.load_uri(self._filelist[self._count])
 
     def get_single_page_height(self):
         """
@@ -161,7 +163,10 @@ class _JobPaginator(GObject.GObject):
                     return self._filelist[n + 1]
         return None
 
-    def _page_load_finished_cb(self, v, frame):
+    def _page_load_changed_cb(self, v, load_event):
+        if load_event is not v.FINISHED:
+            return
+
         f = v.get_main_frame()
         pageheight = v.get_page_height()
 

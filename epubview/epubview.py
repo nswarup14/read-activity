@@ -73,20 +73,22 @@ class _View(Gtk.HBox):
         self._filelist = None
         self._internal_link = None
 
+        # TODO: port, remove Gtk.ScrolledWindow as the WebView has one
         self._sw = Gtk.ScrolledWindow()
         self._view = widgets._WebView()
-        self._view.load_string(LOADING_HTML, 'text/html', 'utf-8', '/')
+        self._view.load_html(LOADING_HTML, '/')
         settings = self._view.get_settings()
         settings.props.default_font_family = 'DejaVu LGC Serif'
         settings.props.enable_plugins = False
-        settings.props.default_encoding = 'utf-8'
-        self._view.connect('load-finished', self._view_load_finished_cb)
+        # TODO: port
+        #settings.props.default_encoding = 'utf-8'
+        self._view.connect('load-changed', self._view_load_changed_cb)
         self._view.connect('scroll-event', self._view_scroll_event_cb)
         self._view.connect('key-press-event', self._view_keypress_event_cb)
-        self._view.connect('selection-changed',
-                           self._view_selection_changed_cb)
-        self._view.connect_after('populate-popup',
-                                 self._view_populate_popup_cb)
+        # TODO: port
+        #self._view.connect('selection-changed', self._view_selection_changed_cb)
+        # TODO: port
+        #self._view.connect_after('populate-popup', self._view_populate_popup_cb)
         self._view.connect('touch-change-page', self.__touch_page_changed_cb)
 
         self._sw.add(self._view)
@@ -374,7 +376,8 @@ class _View(Gtk.HBox):
         self._view.mark_text_matches(
             self._findjob.get_search_text(),
             case_sensitive=self._findjob.get_case_sensitive(), limit=0)
-        self._view.set_highlight_text_matches(True)
+        # TODO: port
+        #self._view.set_highlight_text_matches(True)
 
     def __set_zoom(self, value):
         self._view.set_zoom_level(value)
@@ -423,7 +426,10 @@ class _View(Gtk.HBox):
 
         return False
 
-    def _view_load_finished_cb(self, v, frame):
+    def _view_load_changed_cb(self, v, load_event):
+
+        if load_event is not v.FINISHED:
+            return
 
         self._file_loaded = True
         filename = self._view.props.uri.replace('file://', '')

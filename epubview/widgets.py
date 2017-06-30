@@ -1,21 +1,22 @@
 import logging
 
 import gi
-gi.require_version('WebKit', '3.0')
+gi.require_version('WebKit2', '4.0')
 
-from gi.repository import WebKit
+from gi.repository import WebKit2
 from gi.repository import Gdk
 from gi.repository import GObject
 
 
-class _WebView(WebKit.WebView):
+class _WebView(WebKit2.WebView):
 
     __gsignals__ = {
         'touch-change-page': (GObject.SignalFlags.RUN_FIRST, GObject.TYPE_NONE,
                               ([bool])), }
+    FINISHED = WebKit2.LoadEvent.FINISHED
 
     def __init__(self, only_to_measure=False):
-        WebKit.WebView.__init__(self)
+        WebKit2.WebView.__init__(self)
         self._only_to_measure = only_to_measure
 
     def setup_touch(self):
