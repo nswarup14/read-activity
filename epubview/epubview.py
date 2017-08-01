@@ -236,7 +236,6 @@ class _View(Gtk.HBox):
         '''
         Returns the currently loaded XML file
         '''
-        # return self._loaded_filename
         if self._paginator:
             return self._paginator.get_file_for_pageno(self._loaded_page)
         else:
@@ -432,7 +431,7 @@ class _View(Gtk.HBox):
             return
 
         self._file_loaded = True
-        filename = self._view.props.uri.replace('file://', '')
+        filename = self._view.get_file()
         if os.path.exists(filename.replace('xhtml', 'xml')):
             # Hack for making javascript work
             filename = filename.replace('xhtml', 'xml')
@@ -446,8 +445,8 @@ class _View(Gtk.HBox):
 
         remfactor = self._paginator.get_remfactor_for_file(filename)
         pages = self._paginator.get_pagecount_for_file(filename)
-        extra = int(math.ceil(
-            remfactor * self._view.get_page_height() / (pages - remfactor)))
+        pageheight = self._paginator.get_pageheight_for_file(filename)
+        extra = int(math.ceil(remfactor * pageheight / (pages - remfactor)))
         if extra > 0:
             self._view.add_bottom_padding(extra)
 
@@ -480,7 +479,7 @@ class _View(Gtk.HBox):
             # if the link is at the bottom of the page, we open the next file
             one_page_height = self._paginator.get_single_page_height()
             self._internal_link = None
-            if vertical_pos > self._view.get_page_height() - one_page_height:
+            if vertical_pos > pageheight - one_page_height:
                 logging.error('bottom page link, go to next file')
                 next_file = self._paginator.get_next_filename(filename)
                 if next_file is not None:
@@ -615,7 +614,6 @@ class _View(Gtk.HBox):
             return
 
         filename = self._paginator.get_file_for_pageno(pageno)
-        filename = filename.replace('file://', '')
 
         if filename != self._loaded_filename:
             self._loaded_filename = filename
@@ -640,9 +638,9 @@ class _View(Gtk.HBox):
                 dest = filename.replace('xml', 'xhtml')
                 if not os.path.exists(dest):
                     os.symlink(filename, dest)
-                self._view.load_uri('file://' + dest)
+                self._view.load_file(dest)
             else:
-                self._view.load_uri('file://' + filename)
+                self._view.load_file(filename)
         else:
             self._loaded_page = pageno
             self._scroll_page()
@@ -666,7 +664,7 @@ class _View(Gtk.HBox):
 
         for filepath in self._filelist:
             if filepath.endswith(path):
-                self._view.load_uri('file://' + filepath)
+                self._view.load_file(filepath)
                 oldpage = self._loaded_page
                 self._loaded_page = \
                     self._paginator.get_base_pageno_for_file(filepath)

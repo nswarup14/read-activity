@@ -18,6 +18,7 @@
 
 from gi.repository import GObject
 from gi.repository import Gtk
+import logging
 import widgets
 import math
 import os.path
@@ -99,6 +100,7 @@ class _JobPaginator(GObject.GObject):
         self._filelist = filelist
         self._filedict = {}
         self._pagemap = {}
+        self._heights = {}
 
         self._bookheight = 0
         self._count = 0
@@ -117,9 +119,9 @@ class _JobPaginator(GObject.GObject):
         """
 
         self._temp_win = Gtk.Window()
-        self._temp_view = widgets._WebView(only_to_measure=True)
+        view = widgets._WebView(only_to_measure=True)
 
-        settings = self._temp_view.get_settings()
+        settings = view.get_settings()
         settings.props.default_font_family = 'DejaVu LGC Serif'
         settings.props.sans_serif_font_family = 'DejaVu LGC Sans'
         settings.props.serif_font_family = 'DejaVu LGC Serif'
@@ -134,20 +136,15 @@ class _JobPaginator(GObject.GObject):
         # TODO: port
         #settings.props.default_encoding = 'utf-8'
 
-        sw = Gtk.ScrolledWindow()
-        sw.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.NEVER)
         self._dpi = 96
         self._single_page_height = _mm_to_pixel(PAGE_HEIGHT, self._dpi)
-        sw.set_size_request(_mm_to_pixel(PAGE_WIDTH, self._dpi),
-                            self._single_page_height)
-        sw.add(self._temp_view)
-        self._temp_win.add(sw)
-        self._temp_view.connect('load-changed', self._page_load_changed_cb)
+        self._temp_win.add(view)
+        view.connect('load-changed', self._page_load_changed_cb)
 
         self._temp_win.show_all()
         self._temp_win.unmap()
 
-        self._temp_view.load_uri(self._filelist[self._count])
+        view.load_file(self._filelist[self._count])
 
     def get_single_page_height(self):
         """
@@ -163,38 +160,41 @@ class _JobPaginator(GObject.GObject):
                     return self._filelist[n + 1]
         return None
 
-    def _page_load_changed_cb(self, v, load_event):
-        if load_event is not v.FINISHED:
+    def _page_load_changed_cb(self, view, load_event):
+        if load_event is not view.FINISHED:
             return
 
-        f = v.get_main_frame()
-        pageheight = v.get_page_height()
-
-        if pageheight <= self._single_page_height:
-            pages = 1
-        else:
-            pages = pageheight / float(self._single_page_height)
-        for i in range(1, int(math.ceil(pages) + 1)):
-            if pages - i < 0:
-                pagelen = (pages - math.floor(pages)) / pages
+        def page_height_cb(pageheight):
+            filename = view.get_file()
+            logging.error('%r %r' % (filename, pageheight))
+            self._heights[filename] = pageheight
+            if pageheight <= self._single_page_height:
+                pages = 1
             else:
-                pagelen = 1 / pages
-            self._pagemap[float(self._pagecount + i)] = \
-                (f.props.uri, (i - 1) / math.ceil(pages), pagelen)
+                pages = pageheight / float(self._single_page_height)
+            for i in range(1, int(math.ceil(pages) + 1)):
+                if pages - i < 0:
+                    pagelen = (pages - math.floor(pages)) / pages
+                else:
+                    pagelen = 1 / pages
+                self._pagemap[float(self._pagecount + i)] = \
+                    (filename, (i - 1) / math.ceil(pages), pagelen)
 
-        self._pagecount += int(math.ceil(pages))
-        self._filedict[f.props.uri.replace('file://', '')] = \
-            (math.ceil(pages), math.ceil(pages) - pages)
-        self._bookheight += pageheight
+            self._pagecount += int(math.ceil(pages))
+            self._filedict[filename] = (math.ceil(pages),
+                                        math.ceil(pages) - pages)
+            self._bookheight += pageheight
 
-        if self._count + 1 >= len(self._filelist):
-            # TODO
-            # self._screen.set_font_options(self._old_fontoptions)
-            self.emit('paginated')
-            GObject.idle_add(self._cleanup)
-        else:
-            self._count += 1
-            self._temp_view.open(self._filelist[self._count])
+            if self._count + 1 >= len(self._filelist):
+                # TODO
+                # self._screen.set_font_options(self._old_fontoptions)
+                self.emit('paginated')
+                GObject.idle_add(self._cleanup)
+            else:
+                self._count += 1
+                view.load_file(self._filelist[self._count])
+
+        pageheight = view.get_page_height(page_height_cb)
 
     def _cleanup(self):
         self._temp_win.destroy()
@@ -223,12 +223,18 @@ class _JobPaginator(GObject.GObject):
         '''
         return self._filedict[filename][0]
 
+    def get_pageheight_for_file(self, filename):
+        '''
+        Returns the number of pages in file
+        '''
+        return self._heights[filename]
+
     def get_base_pageno_for_file(self, filename):
         '''
         Returns the pageno which begins in filename
         '''
         for key in self._pagemap.keys():
-            if self._pagemap[key][0].replace('file://', '') == filename:
+            if self._pagemap[key][0] == filename:
                 return key
 
         return None

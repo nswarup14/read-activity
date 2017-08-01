@@ -44,7 +44,6 @@ class EpubViewer(epubview.EpubView):
                 self.metadata['title'] = title
         if 'Read_zoom' in self.metadata:
             try:
-                logging.error('Loading zoom %s', self.metadata['Read_zoom'])
                 self.set_zoom(float(self.metadata['Read_zoom']))
             except:
                 pass
@@ -76,7 +75,7 @@ class EpubViewer(epubview.EpubView):
         self._view.set_editable(True)
 
         if highlight:
-            self._view.execute_script(
+            self._view.run_javascript(
                 'document.execCommand("backColor", false, "yellow");')
         else:
             # need remove the highlight nodes
@@ -99,7 +98,7 @@ class EpubViewer(epubview.EpubView):
                   };
                   node = node.parentNode;
                 };"""
-            self._view.execute_script(js)
+            self._view.run_javascript(js)
 
         self._view.set_editable(False)
         # mark the file as modified
@@ -111,9 +110,9 @@ class EpubViewer(epubview.EpubView):
 
     def _save_page(self):
         oldtitle = self._view.get_title()
-        self._view.execute_script(
+        self._view.run_javascript(
             "document.title=document.documentElement.innerHTML;")
-        html = self._view.get_title()
+        html = self._view.get_title()  # TODO: run_javascript is asynchronous
         file_path = self.get_current_file().replace('file:///', '/')
         logging.error(html)
         with open(file_path, 'w') as fd:
@@ -124,7 +123,7 @@ class EpubViewer(epubview.EpubView):
             fd.write(header)
             fd.write(html)
             fd.write('</html>')
-        self._view.execute_script('document.title=%s;' % oldtitle)
+        self._view.run_javascript('document.title=%s;' % oldtitle)
 
     def save(self, file_path):
         if self._modified_files:
@@ -157,9 +156,9 @@ class EpubViewer(epubview.EpubView):
               node = node.parentNode;
             };
             document.title=onHighlight;"""
-        self._view.execute_script(js)
+        self._view.run_javascript(js)  # TODO: run_javascript is asynchronous
         on_highlight = self._view.get_title() == 'true'
-        self._view.execute_script('document.title = "%s";' % page_title)
+        self._view.run_javascript('document.title = "%s";' % page_title)
         # the second parameter is only used in the text backend
         return on_highlight, None
 

@@ -19,6 +19,12 @@ class _WebView(WebKit2.WebView):
         WebKit2.WebView.__init__(self)
         self._only_to_measure = only_to_measure
 
+    def load_file(self, filename):
+        self.load_uri('file://' + filename)
+
+    def get_file(self):
+        return self.get_uri().replace('file://', '')
+
     def setup_touch(self):
         self.get_window().set_events(
             self.get_window().get_events() | Gdk.EventMask.TOUCH_MASK)
@@ -33,17 +39,22 @@ class _WebView(WebKit2.WebView):
             elif x < view_width * 1 / 4:
                 self.emit('touch-change-page', False)
 
-    def get_page_height(self):
+    def get_page_height(self, page_height_cb):
         '''
         Gets height (in pixels) of loaded (X)HTML page.
-        This is done via javascript at the moment
+
+        WebKit2 4.0 API does not expose the height, so we use
+        JavaScript to read it from the document.
+
+        JavaScriptCore is not implemented for Python GI API yet, so we
+        use the document title as return path for the value.
         '''
         hide_scrollbar_js = ''
         if self._only_to_measure:
             hide_scrollbar_js = \
                 'document.documentElement.style.overflow = "hidden";'
 
-        oldtitle = self.get_main_frame().get_title()
+        oldtitle = self.get_title()
 
         js = """
             document.documentElement.style.margin = "50px";
@@ -51,20 +62,20 @@ class _WebView(WebKit2.WebView):
                 document.title = 0;
             } else {
                 %s
-                document.title=Math.max(document.body.scrollHeight,
+                document.title = Math.max(document.body.scrollHeight,
                     document.body.offsetHeight,
                     document.documentElement.clientHeight,
                     document.documentElement.scrollHeight,
                     document.documentElement.offsetHeight);
             };
         """ % hide_scrollbar_js
-        self.execute_script(js)
-        ret = self.get_main_frame().get_title()
-        self.execute_script('document.title=%s;' % oldtitle)
-        try:
-            return int(ret)
-        except ValueError:
-            return 0
+
+        def get(view, result):
+            value = int(view.get_title())
+            view.run_javascript('document.title=%s;' % oldtitle)
+            page_height_cb(value)
+
+        self.run_javascript(js, None, get)
 
     def add_bottom_padding(self, incr):
         '''
@@ -76,24 +87,27 @@ class _WebView(WebKit2.WebView):
             newdiv.style.height = "%dpx";
             document.body.appendChild(newdiv);
         """ % incr
-        self.execute_script(js)
+        self.run_javascript(js)
 
     def highlight_next_word(self):
         '''
         Highlight next word (for text to speech)
         '''
-        self.execute_script('highLightNextWord();')
+        self.run_javascript('highLightNextWord();')
 
     def go_to_link(self, id_link):
-        self.execute_script('window.location.href = "%s";' % id_link)
+        self.run_javascript('window.location.href = "%s";' % id_link)
 
-    def get_vertical_position_element(self, id_link):
+    def get_vertical_position_element(self, id_link, vertical_position_cb):
         '''
-        Get the vertical position of a element, in pixels
+        Get the vertical position of a element, in pixels.
+
+        JavaScriptCore is not implemented for Python GI API yet, so we
+        use the document title as return path for the value.
         '''
         # remove the first '#' char
         id_link = id_link[1:]
-        oldtitle = self.get_main_frame().get_title()
+        oldtitle = self.get_title()
         js = """
             obj = document.getElementById('%s');
             var top = 0;
@@ -109,10 +123,10 @@ class _WebView(WebKit2.WebView):
                 top += obj.y;
             };
             document.title=top;""" % id_link
-        self.execute_script(js)
-        ret = self.get_main_frame().get_title()
-        self.execute_script('document.title=%s;' % oldtitle)
-        try:
-            return int(ret)
-        except ValueError:
-            return 0
+
+        def get(view, result):
+            value = int(view.get_title())
+            view.run_javascript('document.title=%s;' % oldtitle)
+            vertical_position_cb(value)
+
+        self.run_javascript(js, None, get)
