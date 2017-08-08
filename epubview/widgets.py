@@ -109,19 +109,19 @@ class _WebView(WebKit2.WebView):
         oldtitle = self.get_title()
         js = """
             obj = document.getElementById('%s');
-            var top = 0;
-            if(obj.offsetParent) {
-                while(1) {
-                    top += obj.offsetTop;
-                    if(!obj.offsetParent) {
+            var y = 0;
+            if (obj.offsetParent) {
+                while (1) {
+                    y += obj.offsetTop;
+                    if (!obj.offsetParent) {
                         break;
                     };
                     obj = obj.offsetParent;
-                    };
-            } else if(obj.y) {
-                top += obj.y;
+                };
+            } else if (obj.y) {
+                y += obj.y;
             };
-            document.title=top;""" % id_link
+            document.title=y;""" % id_link
 
         def get(view, result):
             value = int(view.get_title())
