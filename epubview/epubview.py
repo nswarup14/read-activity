@@ -479,11 +479,7 @@ class _View(Gtk.HBox):
             else:
                 self._scroll_page()
 
-        # process_file = True
-        if self._internal_link is not None:
-            self._view.go_to_link(self._internal_link)
-            vertical_pos = \
-                self._view.get_vertical_position_element(self._internal_link)
+        def vertical_position_cb(vertical_pos):
             # set the page number based in the vertical position
             initial_page = self._paginator.get_base_pageno_for_file(filename)
             self._loaded_page = initial_page + int(
@@ -513,6 +509,13 @@ class _View(Gtk.HBox):
 #            tags = body.findAll(text=True)
 #            self._all_text = ''.join([tag for tag in tags])
 #            self._prepare_text_to_speech(self._all_text)
+
+        # process_file = True
+        if self._internal_link is not None:
+            self._view.go_to_link(self._internal_link)
+            vertical_pos = \
+                self._view.get_vertical_position_element(self._internal_link,
+                                                         vertical_position_cb)
 
     def _prepare_text_to_speech(self, page_text):
         i = 0
