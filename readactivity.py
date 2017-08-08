@@ -262,6 +262,8 @@ class ReadActivity(activity.Activity):
         total_page_item.show()
 
         self._bookmarker = ToggleToolButton('emblem-favorite')
+        self._bookmarker.set_accelerator('<ctrl>d')
+        self._bookmarker_set_tooltip()
         self._bookmarker_toggle_handler_id = self._bookmarker.connect(
             'toggled', self.__bookmarker_toggled_cb)
         self._bookmarker.show()
@@ -558,6 +560,7 @@ class ReadActivity(activity.Activity):
     def __bookmarker_toggled_cb(self, button):
         page = self._view.get_current_page()
         if self._bookmarker.props.active:
+            self._bookmarker_set_tooltip()
             self._bookmark_view.add_bookmark(page)
         else:
             alert = ConfirmationAlert()
@@ -578,6 +581,7 @@ class ReadActivity(activity.Activity):
             self._bookmarker.props.active = True
             self._bookmarker.handler_unblock(
                 self._bookmarker_toggle_handler_id)
+            self._bookmarker_set_tooltip()
 
     def __page_changed_cb(self, model, page_from, page_to):
         self._update_nav_buttons(page_to)
@@ -598,6 +602,13 @@ class ReadActivity(activity.Activity):
         self._bookmarker.props.active = \
             self._bookmark_view.is_showing_local_bookmark()
         self._bookmarker.handler_unblock(self._bookmarker_toggle_handler_id)
+        self._bookmarker_set_tooltip()
+
+    def _bookmarker_set_tooltip(self):
+        if self._bookmarker.props.active:
+            self._bookmarker.set_tooltip(_('Delete Bookmark '))
+        else:
+            self._bookmarker.set_tooltip(_('Add Bookmark '))
 
     def _update_nav_buttons(self, current_page):
         self._back_button.props.sensitive = current_page > 0
