@@ -15,9 +15,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+import gi
+gi.require_version('WebKit2', '4.0')
+
 from gi.repository import Gtk
 from gi.repository import GObject
 from gi.repository import Gdk
+from gi.repository import WebKit2
 import widgets
 
 import logging
@@ -427,7 +431,7 @@ class _View(Gtk.HBox):
 
     def _view_load_changed_cb(self, v, load_event):
 
-        if load_event is not v.FINISHED:
+        if load_event is not WebKit2.LoadEvent.FINISHED:
             return
 
         self._file_loaded = True

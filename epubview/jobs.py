@@ -18,6 +18,7 @@
 
 from gi.repository import GObject
 from gi.repository import Gtk
+from gi.repository import WebKit2
 import logging
 import widgets
 import math
@@ -161,7 +162,7 @@ class _JobPaginator(GObject.GObject):
         return None
 
     def _page_load_changed_cb(self, view, load_event):
-        if load_event is not view.FINISHED:
+        if load_event is not WebKit2.LoadEvent.FINISHED:
             return
 
         def page_height_cb(pageheight):
