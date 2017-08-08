@@ -213,10 +213,6 @@ class BookmarkAddDialog(BookmarkDialog):
                                                  json.dumps(content))
         self.destroy()
 
-    def cancel_clicked_cb(self, widget):
-        self._sidebarinstance.notify_bookmark_change()
-        BaseReadDialog.cancel_clicked_cb(self, widget)
-
 
 class BookmarkEditDialog(BookmarkDialog):
 
