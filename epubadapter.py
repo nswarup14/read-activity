@@ -5,6 +5,8 @@ import epubview
 
 # import speech
 
+# TODO: evaluate https://github.com/booktype/ebooklib instead of WebKit
+
 from cStringIO import StringIO
 
 _logger = logging.getLogger('read-activity')
