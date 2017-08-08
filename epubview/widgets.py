@@ -14,6 +14,9 @@ class _WebView(WebKit2.WebView):
     def __init__(self, only_to_measure=False):
         WebKit2.WebView.__init__(self)
         self._only_to_measure = only_to_measure
+        def nt(view, new):
+            logging.error('notify::title %r' % (self.props.title))
+        self.connect('notify::title', nt)
 
     def load_file(self, filename):
         self.load_uri('file://' + filename)
