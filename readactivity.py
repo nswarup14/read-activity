@@ -1295,8 +1295,8 @@ class ReadActivity(activity.Activity):
         self._bookmark_view.del_bookmark(num_page)
 
     def _get_screenshot(self):
-        """Copied from activity.get_preview()
-        """
+        """Copied from activity.get_preview()"""
+        # FIXME: editing a bookmark captures a blank screenshot
         if self.canvas is None or not hasattr(self.canvas, 'get_window'):
             return None
 

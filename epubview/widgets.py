@@ -124,8 +124,8 @@ class _WebView(WebKit2.WebView):
             document.title=y;""" % id_link
 
         def get(view, result):
-            value = int(view.get_title())
-            view.run_javascript('document.title=%s;' % oldtitle)
+            value = int(self.get_title())
+            self.run_javascript('document.title=%s;' % oldtitle)
             vertical_position_cb(value)
 
         self.run_javascript(js, None, get)

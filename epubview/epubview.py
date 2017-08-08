@@ -281,6 +281,7 @@ class _View(Gtk.HBox):
         return True
 
     def scroll(self, scrolltype, horizontal):
+        logging.error('scroll %r' % scrolltype)
         '''
         Scrolls through the pages.
         Scrolling is horizontal if horizontal is set to True
