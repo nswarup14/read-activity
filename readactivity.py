@@ -174,6 +174,29 @@ class ProgressAlert(Alert):
                 Gtk.main_iteration_do(True)
 
 
+class PageEntry(Gtk.Entry, Gtk.Editable):
+    """
+    Derived class for a page number entry widget.
+
+    Refuses insert of text other than numbers.
+
+    Because pygobject does not support output parameters in signals.
+    https://bugzilla.gnome.org/show_bug.cgi?id=644927
+
+    Avoids `Warning: g_value_get_int: assertion 'G_VALUE_HOLDS_INT
+    (value)' failed`.
+    """
+    def __init__(self):
+        super(PageEntry, self).__init__()
+        self._re = re.compile('[0-9]')
+
+    def do_insert_text(self, new_text, length, position):
+        if not self._re.match(new_text):
+            return position
+        self.get_buffer().insert_text(position, new_text, length)
+        return position + length
+
+
 class ReadActivity(activity.Activity):
     """The Read sugar activity."""
 
@@ -246,20 +269,20 @@ class ReadActivity(activity.Activity):
         toolbar_box.toolbar.insert(self._forward_button, -1)
         self._forward_button.show()
 
-        num_page_item = Gtk.ToolItem()
-        self._num_page_entry = self._create_search()
-        num_page_item.add(self._num_page_entry)
-        self._num_page_entry.show()
-        toolbar_box.toolbar.insert(num_page_item, -1)
-        num_page_item.show()
+        page_item = Gtk.ToolItem()
+        self._page_entry = self._create_page_entry()
+        page_item.add(self._page_entry)
+        self._page_entry.show()
+        toolbar_box.toolbar.insert(page_item, -1)
+        page_item.show()
 
-        total_page_item = Gtk.ToolItem()
-        self._total_page_label = Gtk.Label()
-        total_page_item.add(self._total_page_label)
-        self._total_page_label.show()
-        self._total_page_label.set_margin_right(5)
-        toolbar_box.toolbar.insert(total_page_item, -1)
-        total_page_item.show()
+        pages_item = Gtk.ToolItem()
+        self._pages_label = Gtk.Label()
+        pages_item.add(self._pages_label)
+        self._pages_label.show()
+        self._pages_label.set_margin_right(5)
+        toolbar_box.toolbar.insert(pages_item, -1)
+        pages_item.show()
 
         self._bookmarker = ToggleToolButton('emblem-favorite')
         self._bookmarker.set_accelerator('<ctrl>d')
@@ -427,19 +450,16 @@ class ReadActivity(activity.Activity):
         next_bookmark.connect('activate', self.__next_bookmark_activate_cb)
         return forward
 
-    def _create_search(self):
-        num_page_entry = Gtk.Entry()
-        num_page_entry.set_text('0')
-        num_page_entry.set_alignment(1)
-        num_page_entry.connect('insert-text',
-                               self.__num_page_entry_insert_text_cb)
-        num_page_entry.connect('activate',
-                               self.__num_page_entry_activate_cb)
-        num_page_entry.set_width_chars(4)
-        return num_page_entry
+    def _create_page_entry(self):
+        page_entry = PageEntry()
+        page_entry.set_text('0')
+        page_entry.set_alignment(1)
+        page_entry.connect('activate', self.__page_entry_activate_cb)
+        page_entry.set_width_chars(4)
+        return page_entry
 
-    def _set_total_page_label(self, value):
-        self._total_page_label.set_text(' / %s' % value)
+    def _set_pages_label(self, value):
+        self._pages_label.set_text(' / %s' % value)
 
     def show_navigator_button(self):
         self._view_toolbar.show_nav_button()
@@ -513,13 +533,7 @@ class ReadActivity(activity.Activity):
             logging.debug('Hide tray')
             self.tray.hide()
 
-    def __num_page_entry_insert_text_cb(self, entry, text, length, position):
-        if not re.match('[0-9]', text):
-            entry.emit_stop_by_name('insert-text')
-            return True
-        return False
-
-    def __num_page_entry_activate_cb(self, entry):
+    def __page_entry_activate_cb(self, entry):
         if entry.props.text:
             page = int(entry.props.text) - 1
         else:
@@ -611,12 +625,11 @@ class ReadActivity(activity.Activity):
             self._bookmarker.set_tooltip(_('Add Bookmark '))
 
     def _update_nav_buttons(self, current_page):
+        pagecount = self._view.get_pagecount()
         self._back_button.props.sensitive = current_page > 0
-        self._forward_button.props.sensitive = \
-            current_page < self._view.get_pagecount() - 1
-
-        self._num_page_entry.props.text = str(current_page + 1)
-        self._set_total_page_label(self._view.get_pagecount())
+        self._forward_button.props.sensitive = current_page < pagecount - 1
+        self._page_entry.set_text('%d' % (current_page + 1))
+        self._set_pages_label(pagecount)
 
     def _update_toc(self):
         if self._view.update_toc(self):
@@ -1177,7 +1190,7 @@ class ReadActivity(activity.Activity):
 
     def _key_press_event_cb(self, widget, event):
         if self.activity_button.page.title.has_focus() or \
-                self._num_page_entry.has_focus():
+                self._page_entry.has_focus():
             return False
         keyname = Gdk.keyval_name(event.keyval)
         if keyname == 'c' and event.state & Gdk.ModifierType.CONTROL_MASK:
