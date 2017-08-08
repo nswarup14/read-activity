@@ -340,16 +340,20 @@ class _View(Gtk.HBox):
         '''
         self._view.grab_focus()
 
-        if self._view.search_text(self._findjob.get_search_text(),
-                                  self._findjob.get_case_sensitive(),
-                                  True, False):
-            return
-        else:
-            path = os.path.join(self._epub.get_basedir(),
-                                self._findjob.get_next_file())
-            self.__in_search = True
-            self.__search_fwd = True
-            self._load_file(path)
+        find = self._view.get_find_controller()
+        opts = WebKit2.FindOptions.NONE
+        if not self._findjob.get_case_sensitive():
+            opts |= WebKit2.FindOptions.CASE_INSENSITIVE
+
+        find.search(self._findjob.get_search_text(), opts, 0)
+        return
+
+        # TODO: port, an asynchronous failed-to-find-text handler
+        path = os.path.join(self._epub.get_basedir(),
+                            self._findjob.get_next_file())
+        self.__in_search = True
+        self.__search_fwd = True
+        self._load_file(path)
 
     def find_previous(self):
         '''
@@ -357,16 +361,21 @@ class _View(Gtk.HBox):
         '''
         self._view.grab_focus()
 
-        if self._view.search_text(self._findjob.get_search_text(),
-                                  self._findjob.get_case_sensitive(),
-                                  False, False):
-            return
-        else:
-            path = os.path.join(self._epub.get_basedir(),
-                                self._findjob.get_prev_file())
-            self.__in_search = True
-            self.__search_fwd = False
-            self._load_file(path)
+        find = self._view.get_find_controller()
+        opts = WebKit2.FindOptions.NONE
+        if not self._findjob.get_case_sensitive():
+            opts |= WebKit2.FindOptions.CASE_INSENSITIVE
+        opts |= WebKit2.FindOptions.BACKWARDS
+
+        find.search(self._findjob.get_search_text(), opts, 0)
+        return
+
+        # TODO: port, an asynchronous failed-to-find-text handler
+        path = os.path.join(self._epub.get_basedir(),
+                            self._findjob.get_prev_file())
+        self.__in_search = True
+        self.__search_fwd = False
+        self._load_file(path)
 
     def _find_changed(self, job):
         self._view.grab_focus()
@@ -375,12 +384,14 @@ class _View(Gtk.HBox):
         self.find_next()
 
     def _mark_found_text(self):
+        # TODO: port
+        return
+
         self._view.unmark_text_matches()
         self._view.mark_text_matches(
             self._findjob.get_search_text(),
             case_sensitive=self._findjob.get_case_sensitive(), limit=0)
-        # TODO: port
-        #self._view.set_highlight_text_matches(True)
+        self._view.set_highlight_text_matches(True)
 
     def __set_zoom(self, value):
         self._view.set_zoom_level(value)
@@ -456,7 +467,8 @@ class _View(Gtk.HBox):
 
         if self.__in_search:
             self._mark_found_text()
-            self._view.search_text(self._findjob.get_search_text(),
+            find = self._view.get_find_controller()
+            find.search_text(self._findjob.get_search_text(),
                                    self._findjob.get_case_sensitive(),
                                    self.__search_fwd, False)
             self.__in_search = False
