@@ -100,7 +100,7 @@ class _WebView(WebKit2.WebView):
 
     def get_vertical_position_element(self, id_link, vertical_position_cb):
         '''
-        Get the vertical position of a element, in pixels.
+        Get the vertical position of an element, in pixels.
 
         JavaScriptCore is not implemented for Python GI API yet, so we
         use the document title as return path for the value.
