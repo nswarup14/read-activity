@@ -5,7 +5,7 @@ from gi.repository import Gdk
 from gi.repository import WebKit2
 
 
-class _WebView(WebKit2.WebView):
+class EpubWebView(WebKit2.WebView):
 
     __gsignals__ = {
         'touch-change-page': (GObject.SignalFlags.RUN_FIRST, GObject.TYPE_NONE,

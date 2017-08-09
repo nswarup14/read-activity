@@ -79,7 +79,7 @@ class _View(Gtk.HBox):
 
         # TODO: port, remove Gtk.ScrolledWindow as the WebView has one
         self._sw = Gtk.ScrolledWindow()
-        self._view = widgets._WebView()
+        self._view = widgets.EpubWebView()
         self._view.load_html(LOADING_HTML, '/')
         settings = self._view.get_settings()
         settings.props.default_font_family = 'DejaVu LGC Serif'
