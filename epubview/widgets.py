@@ -42,8 +42,9 @@ class EpubWebView(WebKit2.WebView):
         '''
         Gets height (in pixels) of loaded (X)HTML page.
 
-        WebKit2 4.0 API does not expose the height, so we use
-        JavaScript to read it from the document.
+        WebKit2 4.0 API does not expose the height, or we have not
+        found where it does, so we use JavaScript to read it from the
+        document.
 
         JavaScriptCore is not implemented for Python GI API yet, so we
         use the document title as return path for the value.
