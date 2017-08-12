@@ -14,6 +14,8 @@ class EpubWebView(WebKit2.WebView):
     def __init__(self, only_to_measure=False):
         WebKit2.WebView.__init__(self)
         self._only_to_measure = only_to_measure
+        return
+
         def nt(view, new):
             logging.error('notify::title %r' % (self.props.title))
         self.connect('notify::title', nt)
@@ -130,3 +132,6 @@ class EpubWebView(WebKit2.WebView):
             vertical_position_cb(value)
 
         self.run_javascript(js, None, get)
+
+    def move_cursor(self, ms, count):
+        logging.error('move_cursor ms %r count %r' % (ms, count))

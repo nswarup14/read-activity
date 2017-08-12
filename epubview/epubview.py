@@ -148,6 +148,7 @@ class _View(Gtk.HBox):
         '''
         Returns True if any part of the content is selected
         '''
+        # TODO: port
         return self._view.can_copy_clipboard()
 
     def get_zoom(self):
@@ -204,12 +205,14 @@ class _View(Gtk.HBox):
         """
         Used to save the scrolled position and restore when needed
         """
+        logging.error('get_vertical_pos %r' % self._v_vscrollbar.get_adjustment().get_value())
         return self._v_vscrollbar.get_adjustment().get_value()
 
     def set_vertical_pos(self, position):
         """
         Used to save the scrolled position and restore when needed
         """
+        logging.error('set_vertical_pos %r' % position)
         self._v_vscrollbar.get_adjustment().set_value(position)
 
     def can_zoom_in(self):
@@ -294,6 +297,7 @@ class _View(Gtk.HBox):
             self.__going_back = True
             self.__going_fwd = False
             if not self._do_page_transition():
+                # TODO: port, move_cursor unavailable
                 self._view.move_cursor(Gtk.MovementStep.PAGES, -1)
         elif scrolltype == Gtk.ScrollType.PAGE_FORWARD:
             self.__going_back = False
@@ -333,6 +337,7 @@ class _View(Gtk.HBox):
         '''
         Copies the current selection to clipboard.
         '''
+        # TODO: port
         self._view.copy_clipboard()
 
     def find_next(self):
@@ -428,17 +433,22 @@ class _View(Gtk.HBox):
 
     def _do_page_transition(self):
         if self.__going_fwd:
+            logging.error('_do_page_transition value %r' % self._v_vscrollbar.get_value())
+            logging.error('_do_page_transition limit %r' % (self._v_vscrollbar.props.adjustment.props.upper - self._v_vscrollbar.props.adjustment.props.page_size))
             if self._v_vscrollbar.get_value() >= \
                 self._v_vscrollbar.props.adjustment.props.upper - \
                     self._v_vscrollbar.props.adjustment.props.page_size:
                 self._load_page(self._loaded_page + 1)
+                logging.error('_do_page_transition True forwards')
                 return True
         elif self.__going_back:
             if self._v_vscrollbar.get_value() == \
                     self._v_vscrollbar.props.adjustment.props.lower:
                 self._load_page(self._loaded_page - 1)
+                logging.error('_do_page_transition True backwards')
                 return True
 
+        logging.error('_do_page_transition False')
         return False
 
     def _view_load_changed_cb(self, v, load_event):
@@ -543,11 +553,13 @@ class _View(Gtk.HBox):
             i = i + 1
 
     def _scroll_page_end(self):
+        logging.error('_scroll_page_end')
         v_upper = self._v_vscrollbar.props.adjustment.props.upper
         # v_page_size = self._v_vscrollbar.props.adjustment.props.page_size
         self._v_vscrollbar.set_value(v_upper)
 
     def _scroll_page(self):
+        logging.error('_scroll_page')
         pageno = self._loaded_page
 
         v_upper = self._v_vscrollbar.props.adjustment.props.upper
@@ -581,6 +593,7 @@ class _View(Gtk.HBox):
         if self._loaded_page < 1:
             return
         scrollval = scrollbar.get_value()
+        logging.error('_v_scrollbar_value_changed_cb %r' % scrollval)
         scroll_upper = self._v_vscrollbar.props.adjustment.props.upper
         scroll_page_size = self._v_vscrollbar.props.adjustment.props.page_size
 
@@ -697,6 +710,7 @@ class _View(Gtk.HBox):
             self.__going_fwd = True
             self.__going_back = False
             if not self._do_page_transition():
+                # TODO: port
                 self._view.move_cursor(Gtk.MovementStep.DISPLAY_LINES, 1)
         elif scrolltype == Gtk.ScrollType.STEP_BACKWARD:
             self.__going_fwd = False
